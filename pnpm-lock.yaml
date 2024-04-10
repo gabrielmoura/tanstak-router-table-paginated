@@ -38,6 +38,9 @@ dependencies:
   sass:
     specifier: 1.74.1
     version: 1.74.1
+  zod:
+    specifier: ^3.22.4
+    version: 3.22.4
 
 devDependencies:
   '@types/react':

@@ -22,8 +22,6 @@ export const Route = createFileRoute("/")({
 });
 
 function HomeComponent() {
-  const { queryClient } = Route.useRouteContext();
-
   const rerender = React.useReducer(() => ({}), {})[1];
 
   const columns = React.useMemo<ColumnDef<Person>[]>(
@@ -178,7 +176,7 @@ function HomeComponent() {
     </div>
   );
 }
-function TablePagination({ table, isFetching, rowCount }) {
+function TablePagination({ table, isFetching, rowCount }:{table:any, isFetching:boolean, rowCount?:string}) {
   return (
     <div>
       <nav className="navbar navbar-expand-md navbar-light  justify-content-between pt-4"
