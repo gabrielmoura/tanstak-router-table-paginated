@@ -11,9 +11,14 @@ import {
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { fetchData, Person } from "../fetchData";
+import { z } from "zod";
 
 export const Route = createFileRoute("/")({
   component: HomeComponent,
+  validateSearch: z.object({
+    pageIndex: z.number().optional().default(0),
+    pageSize: z.number().optional().default(10),
+  }),
 });
 
 function HomeComponent() {
@@ -76,17 +81,18 @@ function HomeComponent() {
     [],
   );
   const navigate = useNavigate();
-  const { pageIndex } = Route.useSearch();
+  const { pageIndex, pageSize } = Route.useSearch();
   const [pagination, setPagination] = React.useState<PaginationState>({
-    pageIndex: pageIndex ?? 0,
-    pageSize: 10,
+    pageIndex: pageIndex as number,
+    pageSize: pageSize as number,
   });
 
   React.useEffect(() => {
     navigate({
       to: "./",
       search: {
-        pageIndex: pagination.pageIndex,
+        pageIndex: pagination.pageIndex as number,
+        pageSize: pagination.pageSize as number,
       },
     }).catch(console.error);
   }, [pagination, navigate]);
@@ -164,76 +170,64 @@ function HomeComponent() {
         </table>
       </div>
       <div className="h-2" />
-      <div className="flex items-center gap-2">
-        <button
-          className="border rounded p-1"
-          onClick={() => table.firstPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          {"<<"}
-        </button>
-        <button
-          className="border rounded p-1"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          {"<"}
-        </button>
-        <button
-          className="border rounded p-1"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          {">"}
-        </button>
-        <button
-          className="border rounded p-1"
-          onClick={() => table.lastPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          {">>"}
-        </button>
-        <span className="flex items-center gap-1">
-          <div>Page</div>
-          <strong>
-            {table.getState().pagination.pageIndex + 1} of{" "}
-            {table.getPageCount().toLocaleString()}
-          </strong>
-        </span>
-        <span className="flex items-center gap-1">
-          | Go to page:
-          <input
-            type="number"
-            defaultValue={table.getState().pagination.pageIndex + 1}
-            onChange={(e) => {
-              const page = e.target.value ? Number(e.target.value) - 1 : 0;
-              table.setPageIndex(page);
-            }}
-            className="border p-1 rounded w-16"
-          />
-        </span>
-        <select
-          value={table.getState().pagination.pageSize}
-          onChange={(e) => {
-            table.setPageSize(Number(e.target.value));
-          }}
-        >
-          {[10, 20, 30, 40, 50].map((pageSize) => (
-            <option key={pageSize} value={pageSize}>
-              Show {pageSize}
-            </option>
-          ))}
-        </select>
-        {dataQuery.isFetching ? "Loading..." : null}
-      </div>
-      <div>
-        Showing {table.getRowModel().rows.length.toLocaleString()} of{" "}
-        {dataQuery.data?.rowCount.toLocaleString()} Rows
-      </div>
+      <TablePagination table={table} isFetching={dataQuery.isFetching} rowCount={dataQuery.data?.rowCount.toLocaleString()} />
       <div>
         <button onClick={() => rerender()}>Force Rerender</button>
       </div>
       <pre>{JSON.stringify(pagination, null, 2)}</pre>
     </div>
   );
+}
+function TablePagination({ table, isFetching, rowCount }) {
+  return (
+    <div>
+      <nav className="navbar navbar-expand-md navbar-light  justify-content-between pt-4"
+        aria-label="Table navigation">
+        <span className="text-sm text-gray-500 dark:text-gray-400 mb-4 md:mb-0 d-block w-100 md-inline md:w-auto">
+          Showing <span
+            className="font-weight-bold text-gray-900 dark:text-white">{table.getState().pagination.pageIndex + 1}</span> of <span
+              className="font-weight-bold text-gray-900 dark:text-white">{table.getPageCount().toLocaleString()}</span>
+          <span> {isFetching ? "Loading..." : null}</span>
+        </span>
+        <ul className="navbar-nav inline-flex me-0 -me-md-2">
+          <li className="nav-item">
+            <button
+              className="btn btn-light nav-link"
+              onClick={() => table.firstPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              First
+            </button>
+          </li>
+
+          <li className="nav-item">
+            <button
+              className="btn btn-primary-light"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              Previous
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              className="btn btn-primary-light"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Next
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              className="btn btn-light nav-link"
+              onClick={() => table.lastPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Last
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>)
 }
