@@ -3,8 +3,10 @@ import React from "react";
 
 import {
   PaginationState,
+  SortingState,
   useReactTable,
   getCoreRowModel,
+  getSortedRowModel,
   ColumnDef,
   flexRender,
 } from "@tanstack/react-table";
@@ -12,6 +14,8 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { fetchData, Person } from "../fetchData";
 import { z } from "zod";
+import { HiArrowDown, HiArrowsUpDown, HiArrowUp } from "react-icons/hi2";
+
 
 export const Route = createFileRoute("/")({
   component: HomeComponent,
@@ -84,6 +88,7 @@ function HomeComponent() {
     pageIndex: pageIndex as number,
     pageSize: pageSize as number,
   });
+  const [sorting, setSorting] = React.useState<SortingState>([])
 
   React.useEffect(() => {
     navigate({
@@ -109,14 +114,19 @@ function HomeComponent() {
     // pageCount: dataQuery.data?.pageCount ?? -1, //you can now pass in `rowCount` instead of pageCount and `pageCount` will be calculated internally (new in v8.13.0)
     rowCount: dataQuery.data?.rowCount, // new in v8.13.0 - alternatively, just pass in `pageCount` directly
     state: {
+      sorting,
       pagination,
+
     },
     onPaginationChange: setPagination,
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     manualPagination: true, //we're doing manual "server-side" pagination
-    // getPaginationRowModel: getPaginationRowModel(), // If only doing manual pagination, you don't need this
-    debugTable: true,
+    //getPaginationRowModel: getPaginationRowModel(), // If only doing manual pagination, you don't need this
+    debugTable: import.meta.env.DEV,
   });
+
 
   return (
     <div className="p-2">
@@ -134,11 +144,18 @@ function HomeComponent() {
                       className="p-3 text-sm font-semibold tracking-wide text-left"
                     >
                       {header.isPlaceholder ? null : (
-                        <div>
+                        <div {...{
+                          className: `flex ${header.column.getCanSort() ? 'cursor-pointer' : ''}`,
+                          onClick: header.column.getToggleSortingHandler(),
+                        }}>
                           {flexRender(
                             header.column.columnDef.header,
                             header.getContext(),
                           )}
+                          {{
+                            asc: <HiArrowUp width={16} />,
+                            desc: <HiArrowDown width={16} />,
+                          }[header.column.getIsSorted() as string] ?? (<HiArrowsUpDown width={16} />)}
                         </div>
                       )}
                     </th>
@@ -176,7 +193,7 @@ function HomeComponent() {
     </div>
   );
 }
-function TablePagination({ table, isFetching, rowCount }:{table:any, isFetching:boolean, rowCount?:string}) {
+function TablePagination({ table, isFetching, rowCount }: { table: any, isFetching: boolean, rowCount?: string }) {
   return (
     <div>
       <nav className="navbar navbar-expand-md navbar-light  justify-content-between pt-4"
