@@ -16,13 +16,14 @@ import { fetchData, Person } from "../fetchData";
 import { z } from "zod";
 import { HiArrowDown, HiArrowsUpDown, HiArrowUp } from "react-icons/hi2";
 
+const paginationSchema = z.object({
+  pageIndex: z.number().optional().catch(0),
+  pageSize: z.number().optional().catch(10),
+});
 
 export const Route = createFileRoute("/")({
   component: HomeComponent,
-  validateSearch: z.object({
-    pageIndex: z.number().optional().default(0),
-    pageSize: z.number().optional().default(10),
-  }),
+  validateSearch: (search) => paginationSchema.parse(search),
 });
 
 function HomeComponent() {
@@ -185,7 +186,7 @@ function HomeComponent() {
         </table>
       </div>
       <div className="h-2" />
-      <TablePagination table={table} isFetching={dataQuery.isFetching} rowCount={dataQuery.data?.rowCount.toLocaleString()} />
+      <TablePagination table={table} isFetching={dataQuery.isFetching} />
       <div>
         <button onClick={() => rerender()}>Force Rerender</button>
       </div>
@@ -193,7 +194,7 @@ function HomeComponent() {
     </div>
   );
 }
-function TablePagination({ table, isFetching, rowCount }: { table: any, isFetching: boolean, rowCount?: string }) {
+function TablePagination({ table, isFetching }: { table: any, isFetching: boolean }) {
   return (
     <div>
       <nav className="navbar navbar-expand-md navbar-light  justify-content-between pt-4"
